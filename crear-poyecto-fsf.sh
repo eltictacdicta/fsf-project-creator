@@ -57,11 +57,13 @@ read -p "Elige una opción [1-2]: " DB_OPTION
 
 case "$DB_OPTION" in
     1)
-        DB_TYPE="mariadb"
+        DB_ENGINE="mariadb"
+        DB_TYPE="mariadb:10.11"
         DB_LABEL="MariaDB + phpMyAdmin"
         ;;
     2)
-        DB_TYPE="postgres"
+        DB_ENGINE="postgres"
+        DB_TYPE="postgres:16"
         DB_LABEL="PostgreSQL + pgAdmin"
         ;;
     *)
@@ -118,7 +120,7 @@ echo ""
 echo -e "${YELLOW}3. Instalando herramienta de administración de base de datos...${NC}"
 
 ADDON_INSTALLED=false
-if [ "$DB_TYPE" = "mariadb" ]; then
+if [ "$DB_ENGINE" = "mariadb" ]; then
     DB_ADDON_LABEL="phpMyAdmin"
     DB_ADDON_CANDIDATES=("ddev/ddev-phpmyadmin")
 else
@@ -186,7 +188,7 @@ echo -e "Para iniciar el proyecto:"
 echo -e "  ${YELLOW}cd $PROJECT_NAME${NC}"
 echo -e "  ${YELLOW}ddev start${NC}"
 echo -e ""
-if [ "$DB_TYPE" = "mariadb" ]; then
+if [ "$DB_ENGINE" = "mariadb" ]; then
     echo -e "Panel recomendado: ${YELLOW}phpMyAdmin${NC}"
 else
     echo -e "Panel recomendado: ${YELLOW}pgAdmin${NC}"
