@@ -47,7 +47,7 @@ case "$MAIN_OPTION" in
             exit 1
         fi
 
-        CURRENT_DIR="$(pwd)"
+        CURRENT_DIR="$(pwd -P)"
         PARENT_DIR="$(dirname "$CURRENT_DIR")"
 
         # Si es solo el nombre, buscar el directorio
