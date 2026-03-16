@@ -52,6 +52,9 @@ case "$MAIN_OPTION" in
             # Buscar en directorio actual
             if [ -d "$(pwd)/$PROJECT_TO_DELETE" ]; then
                 PROJECT_PATH="$(pwd)/$PROJECT_TO_DELETE"
+            # Buscar en la carpeta de nivel superior
+            elif [ -d "$(dirname "$(pwd)")/$PROJECT_TO_DELETE" ]; then
+                PROJECT_PATH="$(dirname "$(pwd)")/$PROJECT_TO_DELETE"
             else
                 PROJECT_PATH="$PROJECT_TO_DELETE"
             fi
