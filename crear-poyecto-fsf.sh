@@ -47,14 +47,17 @@ case "$MAIN_OPTION" in
             exit 1
         fi
 
+        CURRENT_DIR="$(pwd)"
+        PARENT_DIR="$(dirname "$CURRENT_DIR")"
+
         # Si es solo el nombre, buscar el directorio
         if [ ! -d "$PROJECT_TO_DELETE" ]; then
             # Buscar en directorio actual
-            if [ -d "$(pwd)/$PROJECT_TO_DELETE" ]; then
-                PROJECT_PATH="$(pwd)/$PROJECT_TO_DELETE"
+            if [ -d "$CURRENT_DIR/$PROJECT_TO_DELETE" ]; then
+                PROJECT_PATH="$CURRENT_DIR/$PROJECT_TO_DELETE"
             # Buscar en la carpeta de nivel superior
-            elif [ -d "$(dirname "$(pwd)")/$PROJECT_TO_DELETE" ]; then
-                PROJECT_PATH="$(dirname "$(pwd)")/$PROJECT_TO_DELETE"
+            elif [ "$PARENT_DIR" != "$CURRENT_DIR" ] && [ -d "$PARENT_DIR/$PROJECT_TO_DELETE" ]; then
+                PROJECT_PATH="$PARENT_DIR/$PROJECT_TO_DELETE"
             else
                 PROJECT_PATH="$PROJECT_TO_DELETE"
             fi
