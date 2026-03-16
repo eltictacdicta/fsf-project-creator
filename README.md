@@ -35,6 +35,7 @@ Te pedirá:
 ### 2. Desinstalar proyecto DDEV
 
 Te permitirá eliminar proyectos DDEV existentes de forma segura, con opción de eliminar también la carpeta del proyecto.
+Puedes indicar el nombre del proyecto o la ruta completa; el script también intentará localizar la carpeta en el directorio actual y en el nivel superior.
 
 ## Después de crear el proyecto
 
