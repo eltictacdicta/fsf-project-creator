@@ -151,6 +151,8 @@ WP_VERSION=""
 WP_TITLE=""
 WP_ADMIN_USER=""
 WP_ADMIN_EMAIL=""
+PROJECT_NEEDS_DB=true
+DDEV_OMIT_CONTAINERS=""
 
 if [ "$PROJECT_TYPE" = "wordpress" ]; then
     echo ""
@@ -196,6 +198,46 @@ if [ "$PROJECT_TYPE" = "wordpress" ]; then
     DB_LABEL="MariaDB + phpMyAdmin (recomendado para WordPress)"
     echo ""
     echo -e "${GREEN}   Base de datos: $DB_LABEL (selección automática)${NC}"
+elif [ "$PROJECT_TYPE" = "php" ]; then
+    echo ""
+    read -p "¿Este proyecto PHP necesita base de datos? (s/n) [n]: " PHP_NEEDS_DB
+    PHP_NEEDS_DB=${PHP_NEEDS_DB:-n}
+
+    case "$PHP_NEEDS_DB" in
+        s|S|si|SI|Si|sí|SÍ|Sí)
+            PROJECT_NEEDS_DB=true
+            echo ""
+            echo "Selecciona el stack de base de datos:"
+            echo "  1) MariaDB + phpMyAdmin"
+            echo "  2) PostgreSQL + pgAdmin"
+            read -p "Elige una opción [1-2]: " DB_OPTION
+
+            case "$DB_OPTION" in
+                1)
+                    DB_ENGINE="mariadb"
+                    DB_TYPE="mariadb:10.11"
+                    DB_LABEL="MariaDB + phpMyAdmin"
+                    ;;
+                2)
+                    DB_ENGINE="postgres"
+                    DB_TYPE="postgres:16"
+                    DB_LABEL="PostgreSQL + pgAdmin"
+                    ;;
+                *)
+                    echo -e "${RED}Error: Opción de base de datos no válida${NC}"
+                    exit 1
+                    ;;
+            esac
+            ;;
+        *)
+            PROJECT_NEEDS_DB=false
+            DB_ENGINE=""
+            DB_TYPE="mariadb:10.11"
+            DB_LABEL="Sin base de datos (contenedor db omitido)"
+            DDEV_OMIT_CONTAINERS="db"
+            echo -e "${GREEN}   Proyecto PHP configurado sin base de datos${NC}"
+            ;;
+    esac
 else
     echo ""
     echo "Selecciona el stack de base de datos:"
@@ -265,10 +307,16 @@ echo -e "${GREEN}   ✓ Cambiado al directorio: $PROJECT_DIR${NC}"
 
 # Ejecutar ddev config
 echo ""
-echo -e "${YELLOW}2. Configurando DDEV con PHP 8.3 y ${DB_TYPE}...${NC}"
+if [ "$PROJECT_NEEDS_DB" = true ]; then
+    echo -e "${YELLOW}2. Configurando DDEV con PHP 8.3 y ${DB_TYPE}...${NC}"
+else
+    echo -e "${YELLOW}2. Configurando DDEV con PHP 8.3 sin base de datos...${NC}"
+fi
 
 if [ "$PROJECT_TYPE" = "wordpress" ]; then
     ddev config --project-type=wordpress --php-version 8.3 --database "$DB_TYPE"
+elif [ -n "$DDEV_OMIT_CONTAINERS" ]; then
+    ddev config --php-version 8.3 --database "$DB_TYPE" --omit-containers="$DDEV_OMIT_CONTAINERS"
 else
     ddev config --php-version 8.3 --database "$DB_TYPE"
 fi
@@ -282,32 +330,36 @@ fi
 
 # Instalar addon de administración de base de datos
 echo ""
-echo -e "${YELLOW}3. Instalando herramienta de administración de base de datos...${NC}"
+if [ "$PROJECT_NEEDS_DB" = true ]; then
+    echo -e "${YELLOW}3. Instalando herramienta de administración de base de datos...${NC}"
 
-ADDON_INSTALLED=false
-ADDON_INSTALLED_NAME=""
-if [ "$DB_ENGINE" = "mariadb" ]; then
-    DB_ADDON_LABEL="phpMyAdmin"
-    DB_ADDON_CANDIDATES=("ddev/ddev-phpmyadmin" "ddev/ddev-adminer")
-else
-    DB_ADDON_LABEL="pgAdmin"
-    DB_ADDON_CANDIDATES=("MurzNN/ddev-pgadmin" "ddev/ddev-adminer")
-fi
-
-for addon in "${DB_ADDON_CANDIDATES[@]}"; do
-    if ddev add-on get "$addon"; then
-        ADDON_INSTALLED=true
-        ADDON_INSTALLED_NAME="$addon"
-        echo -e "${GREEN}   ✓ Addon instalado: $addon (${DB_ADDON_LABEL})${NC}"
-        break
+    ADDON_INSTALLED=false
+    ADDON_INSTALLED_NAME=""
+    if [ "$DB_ENGINE" = "mariadb" ]; then
+        DB_ADDON_LABEL="phpMyAdmin"
+        DB_ADDON_CANDIDATES=("ddev/ddev-phpmyadmin" "ddev/ddev-adminer")
+    else
+        DB_ADDON_LABEL="pgAdmin"
+        DB_ADDON_CANDIDATES=("MurzNN/ddev-pgadmin" "ddev/ddev-adminer")
     fi
-done
 
-if [ "$ADDON_INSTALLED" = false ]; then
-    echo -e "${YELLOW}   ⚠ No se pudo instalar automáticamente ${DB_ADDON_LABEL}.${NC}"
-    echo -e "${YELLOW}   Puedes instalarlo manualmente con: ddev add-on get <nombre-del-addon>${NC}"
-elif [ "$DB_ENGINE" = "postgres" ] && [ "$ADDON_INSTALLED_NAME" = "ddev/ddev-adminer" ]; then
-    echo -e "${YELLOW}   ℹ Se instaló Adminer como alternativa compatible con PostgreSQL.${NC}"
+    for addon in "${DB_ADDON_CANDIDATES[@]}"; do
+        if ddev add-on get "$addon"; then
+            ADDON_INSTALLED=true
+            ADDON_INSTALLED_NAME="$addon"
+            echo -e "${GREEN}   ✓ Addon instalado: $addon (${DB_ADDON_LABEL})${NC}"
+            break
+        fi
+    done
+
+    if [ "$ADDON_INSTALLED" = false ]; then
+        echo -e "${YELLOW}   ⚠ No se pudo instalar automáticamente ${DB_ADDON_LABEL}.${NC}"
+        echo -e "${YELLOW}   Puedes instalarlo manualmente con: ddev add-on get <nombre-del-addon>${NC}"
+    elif [ "$DB_ENGINE" = "postgres" ] && [ "$ADDON_INSTALLED_NAME" = "ddev/ddev-adminer" ]; then
+        echo -e "${YELLOW}   ℹ Se instaló Adminer como alternativa compatible con PostgreSQL.${NC}"
+    fi
+else
+    echo -e "${YELLOW}3. Proyecto sin base de datos: se omite la instalación del gestor.${NC}"
 fi
 
 if [ "$PROJECT_TYPE" = "fs-framework" ]; then
@@ -513,10 +565,14 @@ else
 fi
 
 echo -e ""
-if [ "$DB_ENGINE" = "mariadb" ]; then
-    echo -e "Panel de base de datos: ${YELLOW}phpMyAdmin${NC}"
+if [ "$PROJECT_NEEDS_DB" = true ]; then
+    if [ "$DB_ENGINE" = "mariadb" ]; then
+        echo -e "Panel de base de datos: ${YELLOW}phpMyAdmin${NC}"
+    else
+        echo -e "Panel de base de datos: ${YELLOW}pgAdmin${NC}"
+    fi
 else
-    echo -e "Panel de base de datos: ${YELLOW}pgAdmin${NC}"
+    echo -e "Panel de base de datos: ${YELLOW}no instalado${NC}"
 fi
 
 if [ "$WP_ALREADY_STARTED" = true ]; then

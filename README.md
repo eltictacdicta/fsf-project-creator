@@ -7,7 +7,7 @@ Script para crear y gestionar proyectos automáticamente con DDEV y FS-Framework
 - **Instalación de proyectos**: Crea nuevos proyectos con DDEV
 - **Tres tipos de proyecto**: FS-Framework, Solo PHP o WordPress
 - **WordPress con WP-CLI**: Descarga, instalación y configuración automática de WordPress en español
-- **Opciones de base de datos**: MariaDB + phpMyAdmin o PostgreSQL + pgAdmin
+- **Opciones de base de datos**: MariaDB + phpMyAdmin, PostgreSQL + pgAdmin o sin base de datos para proyectos Solo PHP
 - **PHP 8.3**: Configuración automática con la última versión de PHP
 - **Desinstalación**: Elimina proyectos DDEV de forma segura
 - **Interfaz interactiva**: Menú guiado paso a paso
@@ -32,8 +32,14 @@ Te pedirá:
 - Nombre del proyecto
 - Tipo de proyecto:
   - **FS-Framework**: Clona e instala el framework FS
-  - **Solo PHP**: Proyecto PHP vacío con DDEV
+  - **Solo PHP**: Proyecto PHP vacío con DDEV, con opción de usar o no base de datos
   - **WordPress**: Instalación completa de WordPress con WP-CLI
+
+#### Opciones específicas de Solo PHP
+
+Al elegir **Solo PHP**, el script preguntará si el proyecto necesita base de datos:
+- Si respondes que **no**, configurará DDEV sin iniciar el contenedor `db` y no instalará phpMyAdmin ni pgAdmin.
+- Si respondes que **sí**, podrás elegir entre MariaDB + phpMyAdmin o PostgreSQL + pgAdmin.
 
 #### Opciones específicas de WordPress
 
